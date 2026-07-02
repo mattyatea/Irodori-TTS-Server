@@ -1891,7 +1891,7 @@ requires-dist = [
     { name = "python-multipart", specifier = ">=0.0.9" },
     { name = "pytorch-triton-rocm", marker = "sys_platform == 'linux' and extra == 'rocm'", specifier = ">=3.5.1", index = "https://download.pytorch.org/whl/rocm7.1", conflict = { package = "irodori-tts-server", extra = "rocm" } },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.9.0" },
-    { name = "soundfile", specifier = ">=0.12.0" },
+    { name = "soundfile", specifier = ">=0.13.1" },
     { name = "torch", specifier = ">=2.10.0,<2.11.0" },
     { name = "torch", marker = "(sys_platform == 'linux' and extra == 'cpu') or (sys_platform == 'win32' and extra == 'cpu')", specifier = ">=2.10.0,<2.11.0", index = "https://download.pytorch.org/whl/cpu", conflict = { package = "irodori-tts-server", extra = "cpu" } },
     { name = "torch", marker = "(sys_platform == 'linux' and extra == 'cu128') or (sys_platform == 'win32' and extra == 'cu128')", specifier = ">=2.10.0,<2.11.0", index = "https://download.pytorch.org/whl/cu128", conflict = { package = "irodori-tts-server", extra = "cu128" } },
