@@ -53,6 +53,9 @@ class RuntimeManager:
                         codec_repo=str(self.settings.codec_repo),
                         model_precision=str(self.settings.model_precision),
                         codec_device=self._resolve_device(self.settings.codec_device),
+                        watermark_device=self._resolve_optional_device(
+                            self.settings.watermark_device
+                        ),
                         codec_precision=str(self.settings.codec_precision),
                         codec_deterministic_encode=bool(self.settings.codec_deterministic_encode),
                         codec_deterministic_decode=bool(self.settings.codec_deterministic_decode),
@@ -101,3 +104,9 @@ class RuntimeManager:
         if raw in {"", "auto"}:
             return default_runtime_device()
         return str(value)
+
+    @staticmethod
+    def _resolve_optional_device(value: str | None) -> str | None:
+        if value is None or str(value).strip() == "":
+            return None
+        return RuntimeManager._resolve_device(value)

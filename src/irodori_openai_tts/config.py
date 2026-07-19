@@ -26,6 +26,7 @@ class Settings(BaseSettings):
 
     model_device: str = "auto"
     codec_device: str = "auto"
+    watermark_device: str | None = None
     model_precision: str = "fp32"
     codec_precision: str = "fp32"
     codec_deterministic_encode: bool = True

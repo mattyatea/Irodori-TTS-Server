@@ -167,6 +167,7 @@ def health() -> dict[str, Any]:
             "hf_checkpoint": settings.hf_checkpoint,
             "model_device": settings.model_device,
             "codec_device": settings.codec_device,
+            "watermark_device": settings.watermark_device,
             "model_precision": settings.model_precision,
             "codec_precision": settings.codec_precision,
             "compile_model": settings.compile_model,

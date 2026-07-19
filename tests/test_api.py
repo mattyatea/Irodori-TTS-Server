@@ -95,6 +95,7 @@ def test_health_does_not_load_model(tmp_path, monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert body["status"] == "ok"
+    assert body["model"]["watermark_device"] is None
     assert body["runtime"]["loaded"] is False
     assert body["runtime"]["loading"] is False
     assert body["runtime"]["max_concurrent_synthesis"] == 1

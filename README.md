@@ -420,6 +420,7 @@ All environment variables use the `IRODORI_` prefix. Request fields override the
 | `IRODORI_CODEC_REPO` | `Aratako/Semantic-DACVAE-Japanese-32dim` | DACVAE codec repo or path. |
 | `IRODORI_MODEL_DEVICE` | `auto` | `auto`, `cuda`, `mps`, or `cpu`. |
 | `IRODORI_CODEC_DEVICE` | `auto` | `auto`, `cuda`, `mps`, or `cpu`. |
+| `IRODORI_WATERMARK_DEVICE` | unset | SilentCipher device: `auto`, `cuda`, `mps`, or `cpu`. Unset uses `IRODORI_CODEC_DEVICE`. |
 | `IRODORI_MODEL_PRECISION` | `fp32` | `fp32` or `bf16`. |
 | `IRODORI_CODEC_PRECISION` | `fp32` | `fp32` or `bf16`. |
 | `IRODORI_COMPILE_MODEL` | `false` | Enable `torch.compile` for core inference methods. Keep disabled when using dynamic LoRA adapters. |
