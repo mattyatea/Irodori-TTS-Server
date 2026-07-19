@@ -220,9 +220,11 @@ When `stream_format: "sse"` is set, the response is `text/event-stream`.
 The server synthesizes each text chunk sequentially and emits one `audio_chunk`
 event per chunk, followed by a final `done` event:
 
-For consistent voice tone across chunks, specify a reference voice with `voice`
-or `irodori.ref_wav`. Without a reference, each chunk is synthesized
-independently and the perceived voice tone may vary between chunks.
+All chunks in one request share the same `irodori.seed` and `irodori.caption`.
+When the seed is omitted, the server generates one random seed for the request
+and reuses it across every chunk. Specifying a reference voice with `voice` or
+`irodori.ref_wav` can further improve voice consistency for checkpoints that
+support speaker conditioning.
 
 ```bash
 curl -N http://localhost:8088/v1/audio/speech \

@@ -37,7 +37,7 @@ class FakeRuntime:
             sample_rate=1000,
             stage_timings=[],
             total_to_decode=0.1,
-            used_seed=123,
+            used_seed=123 if req.seed is None else req.seed,
             messages=[],
         )
 
@@ -837,6 +837,7 @@ def test_speech_chunking_does_not_split_shorter_first_sentence(monkeypatch):
 def test_speech_stream_format_sse_emits_each_chunk(monkeypatch):
     runtime = FakeRuntime()
     monkeypatch.setattr(main, "runtime_manager", FakeRuntimeManager(runtime=runtime))
+    monkeypatch.setattr(main.secrets, "randbits", lambda _bits: 456)
     text = (
         "これは短い文です。これはまだ同じチャンクに残る文です。"
         "ここまでで十分長くなったので分割されます。最後です。"
@@ -853,6 +854,7 @@ def test_speech_stream_format_sse_emits_each_chunk(monkeypatch):
             "irodori": {
                 "chunking_enabled": True,
                 "chunk_min_chars": 35,
+                "caption": "同じ落ち着いた声で話す",
             },
         },
     )
@@ -862,9 +864,52 @@ def test_speech_stream_format_sse_emits_each_chunk(monkeypatch):
     events = sse_events(response.text)
     assert [event for event, _data in events] == ["audio_chunk", "audio_chunk", "done"]
     assert [data["text"] for _event, data in events[:2]] == runtime.texts
+    assert [request.seed for request in runtime.requests] == [456, 456]
+    assert [request.caption for request in runtime.requests] == [
+        "同じ落ち着いた声で話す",
+        "同じ落ち着いた声で話す",
+    ]
+    assert [data["seed"] for _event, data in events[:2]] == [456, 456]
     assert events[0][1]["index"] == 0
     assert events[1][1]["index"] == 1
     assert events[2][1] == {"chunks": 2}
+
+
+def test_speech_chunking_preserves_explicit_seed_across_chunks(monkeypatch):
+    runtime = FakeRuntime()
+    monkeypatch.setattr(main, "runtime_manager", FakeRuntimeManager(runtime=runtime))
+    monkeypatch.setattr(
+        main.secrets,
+        "randbits",
+        lambda _bits: pytest.fail("explicit seed must not be replaced"),
+    )
+    text = (
+        "これは短い文です。これはまだ同じチャンクに残る文です。"
+        "ここまでで十分長くなったので分割されます。最後です。"
+    )
+
+    response = TestClient(main.app).post(
+        "/v1/audio/speech",
+        json={
+            "model": "irodori-tts",
+            "input": text,
+            "voice": "none",
+            "response_format": "wav",
+            "irodori": {
+                "chunking_enabled": True,
+                "chunk_min_chars": 35,
+                "seed": 789,
+                "caption": "同じ落ち着いた声で話す",
+            },
+        },
+    )
+
+    assert response.status_code == 200
+    assert [request.seed for request in runtime.requests] == [789, 789]
+    assert [request.caption for request in runtime.requests] == [
+        "同じ落ち着いた声で話す",
+        "同じ落ち着いた声で話す",
+    ]
 
 
 def test_speech_chunking_skips_when_seconds_is_explicit(monkeypatch):

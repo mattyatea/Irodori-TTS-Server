@@ -4,6 +4,7 @@ import asyncio
 import base64
 import json
 import logging
+import secrets
 import time
 from collections.abc import AsyncIterator, Mapping
 from contextlib import asynccontextmanager
@@ -330,6 +331,7 @@ async def create_speech(payload: SpeechRequest) -> Response:
         sampling_request = _build_sampling_request(payload, voice)
         _validate_sampling_request(sampling_request)
         chunks = _speech_chunks(payload, sampling_request)
+        sampling_request = _share_seed_across_chunks(sampling_request, chunks)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except TypeError as exc:
@@ -572,6 +574,18 @@ def _split_text_for_speech(
     if tail:
         chunks.append(tail)
     return chunks or [text]
+
+
+def _share_seed_across_chunks(
+    sampling_request: SamplingRequest,
+    chunks: list[str],
+) -> SamplingRequest:
+    if len(chunks) <= 1 or sampling_request.seed is not None:
+        return sampling_request
+
+    seed = int(secrets.randbits(63))
+    logger.info("speech chunk seed generated for request: %d", seed)
+    return replace(sampling_request, seed=seed)
 
 
 async def _synthesize_chunks(
