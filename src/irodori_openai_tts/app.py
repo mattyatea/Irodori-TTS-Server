@@ -165,6 +165,7 @@ def health() -> dict[str, Any]:
         "status": "ok",
         "model": {
             "id": settings.model_name,
+            "lora_model_ids": list(settings.lora_model_aliases),
             "hf_checkpoint": settings.hf_checkpoint,
             "model_device": settings.model_device,
             "codec_device": settings.codec_device,
@@ -203,11 +204,12 @@ def list_models() -> dict[str, Any]:
         "object": "list",
         "data": [
             {
-                "id": settings.model_name,
+                "id": model_id,
                 "object": "model",
                 "created": 0,
                 "owned_by": "irodori-tts",
             }
+            for model_id in _configured_model_ids()
         ],
     }
 
@@ -402,10 +404,11 @@ def _stream_format_is_sse(stream_format: str | None) -> bool:
 
 
 def _validate_speech_payload(payload: SpeechRequest) -> None:
-    if payload.model != settings.model_name:
+    model_ids = _configured_model_ids()
+    if payload.model not in model_ids:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported model {payload.model!r}. Use {settings.model_name!r}.",
+            detail=f"Unsupported model {payload.model!r}. Use one of: {', '.join(model_ids)}.",
         )
     if not payload.input.strip():
         raise HTTPException(status_code=400, detail="input must contain non-whitespace text.")
@@ -986,7 +989,11 @@ def _build_sampling_request(payload: SpeechRequest, voice: VoiceSpec) -> Samplin
             "tail_mean_threshold",
         ),
         lora_adapter=_as_optional_str(
-            _coalesce(opts.lora_adapter, _extra(payload, "lora_adapter"), None),
+            _coalesce(
+                opts.lora_adapter,
+                _extra(payload, "lora_adapter"),
+                settings.lora_model_aliases.get(payload.model),
+            ),
             "lora_adapter",
         ),
     )
@@ -1006,6 +1013,10 @@ def _extra(payload: SpeechRequest, key: str) -> Any:
     if not isinstance(extra, Mapping):
         return None
     return extra.get(key)
+
+
+def _configured_model_ids() -> list[str]:
+    return list(dict.fromkeys((settings.model_name, *settings.lora_model_aliases)))
 
 
 def _explicit_option(payload: SpeechRequest, key: str, default: Any) -> Any:

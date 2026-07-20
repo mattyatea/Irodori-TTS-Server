@@ -114,6 +114,22 @@ def test_models_lists_configured_single_v3_model():
     assert data[0]["id"] == main.settings.model_name
 
 
+def test_models_lists_dynamic_lora_aliases(monkeypatch):
+    monkeypatch.setattr(
+        main.settings,
+        "lora_model_aliases",
+        {"irodori-tts-alice": "/models/adapters/alice"},
+    )
+
+    response = TestClient(main.app).get("/v1/models")
+
+    assert response.status_code == 200
+    assert [model["id"] for model in response.json()["data"]] == [
+        main.settings.model_name,
+        "irodori-tts-alice",
+    ]
+
+
 def test_auth_required_when_api_key_is_configured(monkeypatch):
     monkeypatch.setattr(main.settings, "api_key", "secret")
     client = TestClient(main.app)
@@ -486,6 +502,51 @@ def test_speech_passes_lora_adapter_option(monkeypatch):
 
     assert response.status_code == 200
     assert runtime.requests[0].lora_adapter == "/models/adapters/speaker-a"
+
+
+def test_speech_resolves_dynamic_lora_model_alias(monkeypatch):
+    runtime = FakeRuntime()
+    monkeypatch.setattr(main, "runtime_manager", FakeRuntimeManager(runtime=runtime))
+    monkeypatch.setattr(
+        main.settings,
+        "lora_model_aliases",
+        {"irodori-tts-alice": "/models/adapters/alice"},
+    )
+
+    response = TestClient(main.app).post(
+        "/v1/audio/speech",
+        json={
+            "model": "irodori-tts-alice",
+            "input": "こんにちは。",
+            "voice": "none",
+        },
+    )
+
+    assert response.status_code == 200
+    assert runtime.requests[0].lora_adapter == "/models/adapters/alice"
+
+
+def test_explicit_lora_adapter_overrides_model_alias(monkeypatch):
+    runtime = FakeRuntime()
+    monkeypatch.setattr(main, "runtime_manager", FakeRuntimeManager(runtime=runtime))
+    monkeypatch.setattr(
+        main.settings,
+        "lora_model_aliases",
+        {"irodori-tts-alice": "/models/adapters/alice"},
+    )
+
+    response = TestClient(main.app).post(
+        "/v1/audio/speech",
+        json={
+            "model": "irodori-tts-alice",
+            "input": "こんにちは。",
+            "voice": "none",
+            "irodori": {"lora_adapter": "/models/adapters/override"},
+        },
+    )
+
+    assert response.status_code == 200
+    assert runtime.requests[0].lora_adapter == "/models/adapters/override"
 
 
 def test_speech_runs_model_load_and_synthesis_in_executor(monkeypatch):

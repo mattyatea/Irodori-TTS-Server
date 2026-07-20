@@ -298,6 +298,16 @@ Common `irodori` options:
 
 Dynamic LoRA loading is per runtime process. The first request for an adapter loads it into memory; later requests for the same adapter reuse the cached adapter. To run the base model after an adapter has been loaded, omit `lora_adapter` or set it to `null`, `"none"`, or `"base"`. Dynamic LoRA is not compatible with `IRODORI_COMPILE_MODEL=true`.
 
+Dynamic LoRA adapters can also be exposed as OpenAI model IDs:
+
+```env
+IRODORI_LORA_MODEL_ALIASES={"irodori-tts-alice":"/models/adapters/alice","irodori-tts-bob":"/models/adapters/bob"}
+```
+
+The aliases appear in `GET /v1/models`. Selecting an alias through the request
+`model` field applies its adapter automatically. An explicit
+`irodori.lora_adapter` still takes precedence.
+
 ### Voice Management
 
 The server scans `IRODORI_VOICES_DIR` for voice files. File stems become voice IDs.
@@ -417,6 +427,7 @@ All environment variables use the `IRODORI_` prefix. Request fields override the
 | `IRODORI_TTS_BACKEND` | `cu128` | Docker build backend: `cu128`, `rocm`, or `cpu`. |
 | `IRODORI_API_KEY` | unset | Optional bearer token. |
 | `IRODORI_MODEL_NAME` | `irodori-tts` | Model ID used in requests. |
+| `IRODORI_LORA_MODEL_ALIASES` | `{}` | JSON object mapping additional OpenAI model IDs to Dynamic LoRA adapter directories. |
 | `IRODORI_HF_CHECKPOINT` | `Aratako/Irodori-TTS-500M-v3` | Hugging Face repo containing `model.safetensors`. |
 | `IRODORI_CHECKPOINT` | unset | Local checkpoint path. Takes precedence over `IRODORI_HF_CHECKPOINT`. |
 | `IRODORI_CODEC_REPO` | `Aratako/Semantic-DACVAE-Japanese-32dim` | DACVAE codec repo or path. |

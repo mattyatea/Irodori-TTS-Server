@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     hf_checkpoint: str = "Aratako/Irodori-TTS-500M-v3"
     codec_repo: str = "Aratako/Semantic-DACVAE-Japanese-32dim"
     model_name: str = "irodori-tts"
+    lora_model_aliases: dict[str, str] = Field(default_factory=dict)
 
     model_device: str = "auto"
     codec_device: str = "auto"
